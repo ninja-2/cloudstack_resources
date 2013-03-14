@@ -24,9 +24,9 @@
 #
 #}
 
-resources { 'cloudstack_instance':
-  purge => true
-}
+#resources { 'cloudstack_instance':
+#  purge => true
+#}
 
 # ssh_transport {
 #
@@ -50,8 +50,6 @@ cloudstack_instance { 'foo2':
   image      => 'CentOS 5.6(64-bit) no GUI (XenServer)',
   network    => 'puppetlabs-network',
   group      => 'foo2',
-}
-
 }
 
 

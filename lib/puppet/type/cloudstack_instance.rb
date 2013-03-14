@@ -57,6 +57,10 @@ Puppet::Type.newtype(:cloudstack_instance) do
     desc 'account that launched vm'
   end
 
+  newproperty(:security_group_list) do
+    desc 'security_group_list of the vm'
+  end
+
   newproperty(:domain) do
     desc 'domain of account'
   end

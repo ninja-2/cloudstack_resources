@@ -14,7 +14,7 @@ Puppet::Type.type(:cloudstack_image).provide(
     # I could not use the
     conn.list_templates('templatefilter' => 'executable')['listtemplatesresponse']['template'].collect do |image|
       new(
-          :name       => image['name'],
+          :name       => image['displaytext'],
           :id         => image['id'],
           :ensure => :present
       )

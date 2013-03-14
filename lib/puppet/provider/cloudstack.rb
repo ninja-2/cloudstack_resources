@@ -62,7 +62,7 @@ class Puppet::Provider::CloudStack < Puppet::Provider
   def get_id_from_request(name, type, options={})
     all_objects = connection.send("list_#{type}s", options)["list#{type}sresponse"][type]
     matching_ids = all_objects.collect do |x|
-      if (x['name'] == name)
+      if (x['displaytext'] == name)
         x['id']
       else
         nil

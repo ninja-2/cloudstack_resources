@@ -14,20 +14,21 @@ Puppet::Type.type(:cloudstack_instance).provide(
           raise(Puppet::Error, "Does not support dual nics (it is just a prototype")
         end
         new(
-          :name               => server.display_name,
-          :id                 => server.id,
-          :flavor             => server.flavor_name,
-          :image              => server.image_name,
-          :zone               => server.zone_name,
-          :network_id         => server.nics.first['networkid'],
-          :internal_ipaddress => server.nics.first['ipaddress'],
-          :account            => server.account_name,
-          :domain             => server.domain_name,
-          :host               => server.host_name,
-          :state              => server.state.downcase,
-          :group              => server.group,
-          #:keypair            => server.keypair,
-          :ensure             => :present
+          :name                 => server.display_name,
+          :id                   => server.id,
+          :flavor               => server.flavor_name,
+          :image                => server.templated_display_text,
+          :zone                 => server.zone_name,
+          :network_id           => server.nics.first['networkid'],
+          :internal_ipaddress   => server.nics.first['ipaddress'],
+          :account              => server.account_name,
+          :domain               => server.domain_name,
+          :host                 => server.host_name,
+          :state                => server.state.downcase,
+          :group                => server.group,
+          :security_group_list  => server.security_group_list,
+          #:keypair              => server.keypair,
+          :ensure               => :present
           # I may want to print network information here
          )
       end
@@ -91,6 +92,10 @@ Puppet::Type.type(:cloudstack_instance).provide(
       nets.first['name']
     end
   end
+
+  def security_group_list
+    @property_hash[:security_group_list]
+  end 
 
   def get_flavor_id(name)
     get_id_from_model(name, 'flavors')
