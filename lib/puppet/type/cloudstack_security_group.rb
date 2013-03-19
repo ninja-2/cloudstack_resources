@@ -10,11 +10,11 @@ Puppet::Type.newtype(:cloudstack_security_group) do
 
   end
 
-  newproperty(:ingress_rules) do
+  newproperty(:ingress_rules, :array_matching => :all) do
 
   end
 
-  newproperty(:egress_rules) do
+  newproperty(:egress_rules, :array_matching => :all) do
 
   end
 

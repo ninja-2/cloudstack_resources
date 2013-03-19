@@ -27,7 +27,8 @@ Puppet::Type.type(:cloudstack_instance).provide(
           :state                => server.state.downcase,
           :group                => server.group,
           :security_group_list  => server.security_group_list,
-          #:keypair              => server.keypair,
+          :keypair              => server.key_name,
+          :userdata             => server.user_data,
           :ensure               => :present
           # I may want to print network information here
          )
@@ -43,23 +44,46 @@ Puppet::Type.type(:cloudstack_instance).provide(
     zone_id    = get_zone_id(resource[:zone])
     image_id   = get_image_id(resource[:image], zone_id)
     network_id = resource[:network] ? get_network_id(resource[:network], zone_id): nil
+    security_group_ids = resource[:security_group_list].collect { |security_group_name|  { "id" => get_security_group_id(security_group_name) } }
+    user_data = resource[:userdata] ? Base64.encode64(resource[:userdata]).chomp : nil
+    Puppet.notice("Launching server instance  #{resource[:name]}")
     Puppet.debug("Bootstrapping instance with:
       :display_name      => #{resource[:name]},
       :image_id          => #{image_id},
       :flavor_id         => #{flavor_id},
       :zone_id           => #{zone_id},
-      :network_ids       => #{network_id}
+      :network_ids       => #{network_id},
+      :security_group_list => #{security_group_ids},
+      :keypair             => #{resource[:keypair]},
+      :userdata          => #{user_data},
     ")
-    connection.servers.bootstrap(
+    server=connection.servers.bootstrap(
       :display_name      => resource[:name],
       :image_id          => image_id,
       :flavor_id         => flavor_id,
       :zone_id           => zone_id,
       :network_ids       => network_id,
-      :group             => resource[:group]
+      :group             => resource[:group],
+      :security_group_list => security_group_ids ,
+      :key_name           => resource[:keypair],
+      :user_data         => user_data
       #:keypair           => resource[:keypair]
     )
+    begin
+      server.wait_for do
+        print '#'
+	raise Puppet::Provider::CloudStack:InstanceErrorState if self.state == 'error'
+        self.ready?
+      end
+      puts
+      Puppet.notice("Server #{resource[:name]} id: #{server.id} now launched")
+    rescue Puppet::Provider::CloudStack::InstanceErrorState
+      Puppet.err("Staring server #{resource[:name]} failed")
+    end
+    return server
   end
+
+    
 
   def destroy
    # TODO need to block until delete is completed
@@ -87,6 +111,10 @@ Puppet::Type.type(:cloudstack_instance).provide(
     @property_hash[:group]
   end
 
+  def keypair
+    @property_hash[:keypair]
+  end
+
   def network
     if nets = connection.list_networks('id' => @property_hash[:network_id])['listnetworksresponse']['network']
       nets.first['name']
@@ -94,7 +122,9 @@ Puppet::Type.type(:cloudstack_instance).provide(
   end
 
   def security_group_list
-    @property_hash[:security_group_list]
+    @property_hash[:security_group_list].collect do |security_group|
+      security_group["name"]
+    end
   end 
 
   def get_flavor_id(name)
@@ -112,6 +142,10 @@ Puppet::Type.type(:cloudstack_instance).provide(
 
   def get_zone_id(name)
     get_id_from_model(name, 'zones')
+  end
+
+  def get_security_group_id(name)
+    get_id_from_model(name, 'security_groups')
   end
 
 end

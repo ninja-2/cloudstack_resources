@@ -9,7 +9,6 @@ Puppet::Type.type(:cloudstack_security_group).provide(
   mk_resource_methods
 
   def self.instances
-    # I may need to fail if the server does not have a name?
     connection.security_groups.collect do |sg|
       new(
         :name          => sg.name,
@@ -17,21 +16,37 @@ Puppet::Type.type(:cloudstack_security_group).provide(
         :ingress_rules => sg.ingress_rules,
         :egress_rules  => sg.egress_rules,
         :ensure        => :present
-        # I may want to print network information here
       )
     end
   end
 
   def create
-    require 'ruby-debug';debugger
-    connection.security_groups.create(
-      :name      => resource[:name]
+    sg=connection.security_groups.create(
+     :name      => resource[:name],
+     :description => resource[:name]
     )
+
+    if ! resource[:ingress_rules].nil? 
+      resource[:ingress_rules].each do |rule| 
+        sgr_param={ "security_group_id" => sg.id,  "direction" => "ingress" }.merge(rule)
+        connection.security_group_rules.create(sgr_param)
+      end
+    end
+
+    if ! resource[:egress_rules].nil?
+      resource[:egress_rules].each do |rule| 
+        sgr_param={ "security_group_id" => sg.id,  "direction" => "egress" }.merge(rule)
+        connection.security_group_rules.create(sgr_param)
+      end
+    end
+
+    return sg
+
   end
 
   def destroy
     # TODO need to block until delete is completed
-    connection.servers.destroy(@property_hash[:id])
+    connection.security_groups.destroy(@property_hash[:id])
   end
 
   def id=(id)
