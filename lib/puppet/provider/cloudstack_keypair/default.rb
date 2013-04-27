@@ -16,7 +16,7 @@ Puppet::Type.type(:cloudstack_keypair).provide(
     end
   end
 
-  def exist?
+  def exists?
     @property_hash[:ensure] == :present
   end
 
@@ -58,7 +58,7 @@ Puppet::Type.type(:cloudstack_keypair).provide(
     if fingerprint
       key_file = key_file_path(fingerprint)
       if File.exists?(key_file)
-        File.read(key_file_path(fingerprint))
+        File.read(key_file)
       else
         Puppet.notice("Could not find locally cached private key for #{resource[:name]}")
         nil
