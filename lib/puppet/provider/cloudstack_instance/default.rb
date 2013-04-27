@@ -9,7 +9,7 @@ Puppet::Type.type(:cloudstack_instance).provide(
   def self.instances
     # I may need to fail if the server does not have a name?
     connection.servers.collect do |server|
-      if server.state != 'Destroyed'
+      if (server.state != 'Destroyed') and (server.state != 'Stopping')
         if server.nics.size > 1
           raise(Puppet::Error, "Does not support dual nics (it is just a prototype")
         end
@@ -69,18 +69,7 @@ Puppet::Type.type(:cloudstack_instance).provide(
       :user_data         => user_data
       #:keypair           => resource[:keypair]
     )
-    begin
-      server.wait_for do
-        print '#'
-	raise Puppet::Provider::CloudStack:InstanceErrorState if self.state == 'error'
-        self.ready?
-      end
-      puts
-      Puppet.notice("Server #{resource[:name]} id: #{server.id} now launched")
-    rescue Puppet::Provider::CloudStack::InstanceErrorState
-      Puppet.err("Staring server #{resource[:name]} failed")
-    end
-    return server
+    @property_hash[:ensure] = :present
   end
 
     
@@ -88,6 +77,7 @@ Puppet::Type.type(:cloudstack_instance).provide(
   def destroy
    # TODO need to block until delete is completed
    connection.servers.destroy(@property_hash[:id])
+   @property_hash[:ensure] = :absent
   end
 
   def internal_ipaddress
@@ -124,7 +114,7 @@ Puppet::Type.type(:cloudstack_instance).provide(
   def security_group_list
     @property_hash[:security_group_list].collect do |security_group|
       security_group["name"]
-    end
+    end.sort
   end 
 
   def get_flavor_id(name)
