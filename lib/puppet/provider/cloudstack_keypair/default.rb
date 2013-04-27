@@ -7,15 +7,17 @@ Puppet::Type.type(:cloudstack_keypair).provide(
   mk_resource_methods
 
   def self.instances
-    # I may need to fail if the server does not have a name?
-    connection.list_ssh_key_pairs['listsshkeypairsresponse']['sshkeypair'].collect do |keypair|
-      #require 'ruby-debug';debugger
+    (connection.list_ssh_key_pairs['listsshkeypairsresponse']['sshkeypair'] || []).collect do |keypair|
       new(
         :name        => keypair['name'],
         :fingerprint => keypair['fingerprint'],
         :ensure => :present
       )
     end
+  end
+
+  def exist?
+    @property_hash[:ensure] == :present
   end
 
   def create
@@ -41,6 +43,7 @@ Puppet::Type.type(:cloudstack_keypair).provide(
       end
       Puppet.info("Writing your private key to #{key_file}")
       File.new(key_file, 'w').write(response['privatekey'])
+      File.chmod(0600, key_file)
     end
     @property_hash[:fingerprint] = response['fingerprint']
     @property_hash[:privatekey]  = response['privatekey']
@@ -53,7 +56,13 @@ Puppet::Type.type(:cloudstack_keypair).provide(
 
   def privatekey
     if fingerprint
-      File.read(key_file_path(fingerprint))
+      key_file = key_file_path(fingerprint)
+      if File.exists?(key_file)
+        File.read(key_file_path(fingerprint))
+      else
+        Puppet.notice("Could not find locally cached private key for #{resource[:name]}")
+        nil
+      end
     else
       fail('Expected fingerprint to be set')
     end
