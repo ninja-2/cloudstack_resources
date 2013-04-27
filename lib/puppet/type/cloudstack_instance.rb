@@ -29,10 +29,6 @@ Puppet::Type.newtype(:cloudstack_instance) do
     desc 'internal ip address. Puppet assumes that instances can only have one'
   end
 
-  newproperty(:keypair) do
-    desc 'keypair to associate with system'
-  end
-
   newproperty(:flavor) do
     desc 'name of flavor'
   end
@@ -85,6 +81,25 @@ Puppet::Type.newtype(:cloudstack_instance) do
       return false
     end
   end
+
+  newproperty(:keypair) do
+    desc 'keypair to associate with system'
+    munge do |value|
+      value = value.to_s
+      if value =~ /^Cloudstack_keypair\[(\S+)\]/
+        $1
+      elsif value =~ /^(\S+)\[(\S+)\]/
+        fail("#{$1} is not a valid type, expected Cloudstack_keypair")
+      else
+        value
+      end
+    end
+  end
+
+  autorequire(:cloudstack_keypair) do
+    [self[:keypair]]
+  end
+
 
 
   # this causes querying the resources to fail ;(
