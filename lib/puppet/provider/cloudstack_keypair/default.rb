@@ -42,11 +42,11 @@ Puppet::Type.type(:cloudstack_keypair).provide(
         fail("keyfile: #{key_file} already exists, not going to override")
       end
       Puppet.info("Writing your private key to #{key_file}")
-      File.new(key_file, 'w').write(response['privatekey'])
+      File.new(key_file, 'w').write(response['privateKey'])
       File.chmod(0600, key_file)
     end
     @property_hash[:fingerprint] = response['fingerprint']
-    @property_hash[:privatekey]  = response['privatekey']
+    @property_hash[:privatekey]  = response['privateKey']
     @property_hash[:ensure]      = :present
   end
 
