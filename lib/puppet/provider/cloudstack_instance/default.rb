@@ -27,7 +27,7 @@ Puppet::Type.type(:cloudstack_instance).provide(
           :state                => server.state.downcase,
           :group                => server.group,
           :security_group_list  => server.security_group_list,
-          :keypair              => server.key_pair,
+          :keypair              => server.key_name,
           :userdata             => server.user_data,
           :ensure               => :present
           # I may want to print network information here
@@ -65,7 +65,7 @@ Puppet::Type.type(:cloudstack_instance).provide(
       :network_ids       => network_id,
       :group             => resource[:group],
       :security_group_list => security_group_ids ,
-      :key_pair           => resource[:keypair],
+      :key_name           => resource[:keypair],
       :user_data         => user_data
       #:keypair           => resource[:keypair]
     )
