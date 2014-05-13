@@ -44,7 +44,7 @@ Puppet::Type.type(:cloudstack_instance).provide(
     zone_id    = get_zone_id(resource[:zone])
     image_id   = get_image_id(resource[:image], zone_id)
     network_id = resource[:network] ? get_network_id(resource[:network], zone_id): nil
-    security_group_ids = resource[:security_group_list].collect { |security_group_name|  { "id" => get_security_group_id(security_group_name) } }
+    security_group_ids = resource[:security_group_list] ? resource[:security_group_list].collect { |security_group_name|  { "id" => get_security_group_id(security_group_name) } } : nil
     user_data = resource[:userdata] ? Base64.encode64(resource[:userdata]).chomp : nil
     Puppet.notice("Launching server instance  #{resource[:name]}")
     Puppet.debug("Bootstrapping instance with:
